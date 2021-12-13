@@ -36,26 +36,27 @@ public class Server {
             System.out.println("Ready to init game");
 
             Position position = new Position(new int[8][8]);
-            playerOut.writeObject("You're figure is 1, go first");
+            playerOut.writeObject(gson.toJson(new ServerMessage(0,"You're figure is 1, go first")));
             playerOut.writeBoolean(true);
-            playerOut.writeObject(position);
+            playerOut.writeObject(gson.toJson(position));
             playerOut.flush();
-            teammateOut.writeObject("You're figure is 2, wait first player turn");
+            teammateOut.writeObject(gson.toJson(new ServerMessage(0,"You're figure is 2, wait first player turn")));
             teammateOut.writeBoolean(false);
-            teammateOut.writeObject(position);
+            teammateOut.writeObject(gson.toJson(position));
+            //System.out.println(gson.toJson(position));
             teammateOut.flush();
 
             try {
                 do {
-                    position = (Position) playerIn.readObject();
+                    position = gson.fromJson(playerIn.readObject().toString(), Position.class);
                     System.out.println(position.isPlayerMove() ? "Teammate:" : "Player:");
                     position.print();
-                    teammateOut.writeObject(position);
+                    teammateOut.writeObject(gson.toJson(position));
                     teammateOut.flush();
-                    position = (Position) teammateIn.readObject();
+                    position = gson.fromJson(teammateIn.readObject().toString(), Position.class);
                     System.out.println(position.isPlayerMove() ? "Teammate:" : "Player:");
                     position.print();
-                    playerOut.writeObject(position);
+                    playerOut.writeObject(gson.toJson(position));
                     playerOut.flush();
                 } while (!position.isEnemyWin() || !position.isHumanWin());
             } catch (IOException e) {

@@ -23,10 +23,10 @@ public class Position implements Serializable {
     private void initGame() {
         field[0][field.length - 1] = TEAMMATE;
         field[field.length - 1][0] = PLAYER;
-        /*for (int i = 0; i < field.length; i++) {
+        for (int i = 0; i < field.length; i++) {
             field[i][i] = ENEMY;
-        }*/
-        field[0][0] = ENEMY;
+        }
+        //field[0][0] = ENEMY;
     }
 
     public boolean isPlayerMove() {

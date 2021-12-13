@@ -1,7 +1,9 @@
 package client;
 
+import com.google.gson.Gson;
 import game.model.Coordinates;
 import game.model.Position;
+import server.ServerMessage;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -15,21 +17,22 @@ public class Client {
 
 
     public static void main(String[] args) {
+        Gson gson = new Gson();
         try (Socket socket = new Socket(IP, PORT);
              ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
              ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
 
-            System.out.println(in.readObject());
+            System.out.println(gson.fromJson(in.readObject().toString(), ServerMessage.class).getData());
             boolean isPlayer = in.readBoolean();
             Position position;
             do {
-                position = (Position) in.readObject();
+                position = gson.fromJson(in.readObject().toString(), Position.class);
                 if (position.isHumanWin() || position.isHumanWin())
                     break;
                 if (position.findFigure(Position.PLAYER) == null && isPlayer ||
                     position.findFigure(Position.TEAMMATE) == null && !isPlayer) {
                     position.enemyMove();
-                    out.writeObject(position);
+                    out.writeObject(gson.toJson(position));
                     out.flush();
                     continue;
                 }
@@ -37,7 +40,7 @@ public class Client {
                 if (isPlayer == position.isPlayerMove()) {
                     makePlayerMove(position);
                     position.enemyMove();
-                    out.writeObject(position);
+                    out.writeObject(gson.toJson(position));
                     out.flush();
                 }
                 System.out.println();
