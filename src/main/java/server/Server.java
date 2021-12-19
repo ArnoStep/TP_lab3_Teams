@@ -56,10 +56,14 @@ public class Server {
                 fileReader.close();
                 position = gson.fromJson(fileContent.toString(), Position.class);
             }
-            playerOut.writeObject(gson.toJson(position));
-            playerOut.flush();
-            teammateOut.writeObject(gson.toJson(position));
-            teammateOut.flush();
+            if (position.findFigure(Position.PLAYER) != null) {
+                playerOut.writeObject(gson.toJson(position));
+                playerOut.flush();
+            }
+            if (position.findFigure(Position.TEAMMATE) != null) {
+                teammateOut.writeObject(gson.toJson(position));
+                teammateOut.flush();
+            }
             //System.out.println(gson.toJson(position));
 
             try {
