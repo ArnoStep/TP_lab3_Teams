@@ -2,12 +2,12 @@ package server;
 
 import com.google.gson.Gson;
 import game.model.Position;
+import net.jimblackler.jsonschemafriend.*;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Scanner;
 
 public class Server {
     private static final int PORT = 255;
@@ -16,6 +16,7 @@ public class Server {
     private static ObjectInputStream playerIn;
     private static ObjectOutputStream teammateOut;
     private static ObjectInputStream teammateIn;
+    private static final String SAVE_FILE_PATH = "C:\\Work and projects\\JavaProjects\\TP_lab2_Teams\\src\\main\\resources\\save.txt";
 
 
     public static void main(String[] args) throws IOException {
@@ -35,16 +36,31 @@ public class Server {
             System.out.println("New connection: " + teammate.getInetAddress());
             System.out.println("Ready to init game");
 
-            Position position = new Position(new int[8][8]);
-            playerOut.writeObject(gson.toJson(new ServerMessage(0,"You're figure is 1, go first")));
+            Position position;
+            playerOut.writeObject(gson.toJson(new ServerMessage(0, "You're figure is 1, go first")));
             playerOut.writeBoolean(true);
+            playerOut.flush();
+            boolean isLoad = playerIn.readBoolean();
+            teammateOut.writeObject(gson.toJson(new ServerMessage(0, "You're figure is 2, wait first player turn")));
+            teammateOut.writeBoolean(false);
+            teammateOut.flush();
+            if (!isLoad) {
+                position = new Position(new int[8][8]);
+            } else {
+                FileReader fileReader = new FileReader(SAVE_FILE_PATH);
+                StringBuilder fileContent = new StringBuilder();
+                Scanner scan = new Scanner(fileReader);
+                while (scan.hasNextLine()) {
+                    fileContent.append(scan.nextLine());
+                }
+                fileReader.close();
+                position = gson.fromJson(fileContent.toString(), Position.class);
+            }
             playerOut.writeObject(gson.toJson(position));
             playerOut.flush();
-            teammateOut.writeObject(gson.toJson(new ServerMessage(0,"You're figure is 2, wait first player turn")));
-            teammateOut.writeBoolean(false);
             teammateOut.writeObject(gson.toJson(position));
-            //System.out.println(gson.toJson(position));
             teammateOut.flush();
+            //System.out.println(gson.toJson(position));
 
             try {
                 do {
@@ -61,9 +77,49 @@ public class Server {
                 } while (!position.isEnemyWin() || !position.isHumanWin());
             } catch (IOException e) {
                 System.out.println("Connection refused");
+                if (schemaValidationTest(gson.toJson(position))) {
+                    saveGame(position);
+                } else {
+                    System.out.println("Incorrect format to save game");
+                }
             }
-        } catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException | GenerationException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void saveGame(Position position) {
+        try {
+            FileWriter fileWriter = new FileWriter(SAVE_FILE_PATH);
+            fileWriter.write(new Gson().toJson(position));
+            fileWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static boolean schemaValidationTest(String json) throws IOException, GenerationException {
+        SchemaStore schemaStore = new SchemaStore(); // Initialize a SchemaStore.
+        Schema schema = schemaStore.loadSchemaJson(getSchemaFormFile()); // Load the schema.
+        Validator validator = new Validator(); // Create a validator.
+        try {
+            validator.validateJson(schema, json);
+            System.out.println("Correct json for save");
+            return true;
+        } catch (ValidationException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private static String getSchemaFormFile() throws IOException {
+        FileReader fileReader = new FileReader("C:\\Work and projects\\JavaProjects\\TP_lab2_Teams\\src\\main\\resources\\schema.txt");
+        StringBuilder fileContent = new StringBuilder();
+        Scanner scan = new Scanner(fileReader);
+        while (scan.hasNextLine()) {
+            fileContent.append(scan.nextLine());
+        }
+        fileReader.close();
+        return fileContent.toString();
     }
 }

@@ -24,6 +24,14 @@ public class Client {
 
             System.out.println(gson.fromJson(in.readObject().toString(), ServerMessage.class).getData());
             boolean isPlayer = in.readBoolean();
+            if (isPlayer) {
+                Scanner scanner = new Scanner(System.in);
+                System.out.println("New game or load?(N/L)");
+                String loadInfo = scanner.nextLine();
+                boolean isLoad = loadInfo.toLowerCase().equals("l");
+                out.writeBoolean(isLoad);
+                out.flush();
+            }
             Position position;
             do {
                 position = gson.fromJson(in.readObject().toString(), Position.class);
