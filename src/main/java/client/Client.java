@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Client {
@@ -24,21 +25,27 @@ public class Client {
 
             System.out.println(gson.fromJson(in.readObject().toString(), ServerMessage.class).getData());
             boolean isPlayer = in.readBoolean();
+            boolean isLoad = false;
             if (isPlayer) {
                 Scanner scanner = new Scanner(System.in);
                 System.out.println("New game or load?(N/L)");
                 String loadInfo = scanner.nextLine();
-                boolean isLoad = loadInfo.toLowerCase().equals("l");
+                isLoad = loadInfo.toLowerCase().equals("l");
                 out.writeBoolean(isLoad);
                 out.flush();
             }
             Position position;
             do {
                 position = gson.fromJson(in.readObject().toString(), Position.class);
+                if (isLoad && Arrays.deepEquals(position.getField(), new Position(new int[8][8]).getField())) {
+                    System.out.println("Save file corrupt");
+                    System.out.println("Start new game");
+                    System.out.println();
+                }
                 if (position.isHumanWin() || position.isHumanWin())
                     break;
                 if (position.findFigure(Position.PLAYER) == null && isPlayer ||
-                    position.findFigure(Position.TEAMMATE) == null && !isPlayer) {
+                        position.findFigure(Position.TEAMMATE) == null && !isPlayer) {
                     position.enemyMove();
                     out.writeObject(gson.toJson(position));
                     out.flush();

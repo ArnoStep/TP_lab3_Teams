@@ -54,7 +54,13 @@ public class Server {
                     fileContent.append(scan.nextLine());
                 }
                 fileReader.close();
-                position = gson.fromJson(fileContent.toString(), Position.class);
+                if(schemaValidationTest(fileContent.toString())) {
+                    position = gson.fromJson(fileContent.toString(), Position.class);
+                } else {
+                    System.out.println("Save file corrupt");
+                    System.out.println("Start new game");
+                    position = new Position(new int[8][8]);
+                }
             }
             if (position.findFigure(Position.PLAYER) != null) {
                 playerOut.writeObject(gson.toJson(position));
@@ -64,8 +70,6 @@ public class Server {
                 teammateOut.writeObject(gson.toJson(position));
                 teammateOut.flush();
             }
-            //System.out.println(gson.toJson(position));
-
             try {
                 do {
                     position = gson.fromJson(playerIn.readObject().toString(), Position.class);
@@ -110,8 +114,7 @@ public class Server {
             validator.validateJson(schema, json);
             System.out.println("Correct json for save");
             return true;
-        } catch (ValidationException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
             return false;
         }
     }

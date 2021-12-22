@@ -1,6 +1,8 @@
 package game.model;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.Random;
 
 public class Position implements Serializable {
@@ -115,6 +117,22 @@ public class Position implements Serializable {
         return getFigureByCoord(coordinates) == PLAYER || getFigureByCoord(coordinates) == TEAMMATE;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Position position = (Position) o;
+        return isPlayerMove == position.isPlayerMove &&
+                Arrays.equals(field, position.field);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(isPlayerMove);
+        result = 31 * result + Arrays.hashCode(field);
+        return result;
+    }
+
     public void shootUp(Coordinates coordinates) {
         if (isHumanFigure(coordinates)) {
             for (int i = coordinates.getX(); i >= 0; i--) {
@@ -124,6 +142,18 @@ public class Position implements Serializable {
                 }
             }
         }
+    }
+
+    public int[][] getField() {
+        return field;
+    }
+
+    public void setField(int[][] field) {
+        this.field = field;
+    }
+
+    public void setPlayerMove(boolean playerMove) {
+        isPlayerMove = playerMove;
     }
 
     public void shootDown(Coordinates coordinates) {
